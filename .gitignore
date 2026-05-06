@@ -1,0 +1,6 @@
+*.tmp
+~$*.pptx
+.DS_Store
+Thumbs.db
+*.mp4
+*.pptm
