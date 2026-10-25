@@ -65,6 +65,12 @@ canvas.gc{width:100%;height:auto;display:block;border-radius:16px;touch-action:n
 .center{text-align:center}
 #heart-cv{width:220px;height:220px;display:block;margin:6px auto}
 #end-img{width:100%;border-radius:16px;margin-top:14px;display:none}
+.rk{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;padding:10px 12px;margin:6px 0;font-size:15px}
+.rk.me{border:2px solid var(--gold);box-shadow:0 0 14px rgba(232,178,77,.3)}
+.rk .p{width:30px;text-align:center;font-weight:800;color:var(--muted)}
+.rk .n{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk .s{font-size:12px;color:var(--muted)}
+.rk .v{font-weight:800;color:#fb7185}
 .big-phrase{font-size:22px;font-weight:800;text-align:center;line-height:1.35;color:var(--gold);margin:16px 0}
 </style>
 </head>
@@ -126,6 +132,11 @@ canvas.gc{width:100%;height:auto;display:block;border-radius:16px;touch-action:n
   <p class="muted center" data-i18n="endSub"></p>
   <button class="btn" id="end-share" data-i18n="share"></button>
   <p class="hint" id="end-msg"></p>
+  <div id="end-rank" style="display:none">
+    <h2 class="center" style="margin-top:22px">🏆 <span data-i18n="rankTitle"></span></h2>
+    <div id="rank-list"></div>
+    <p class="hint" id="rank-upd"></p>
+  </div>
   <img id="end-img" alt="">
 </section>
 
@@ -182,7 +193,15 @@ const UI = {
   shared: Q('¡Listo! Gracias por compartir.', 'Done! Thanks for sharing.'),
   score: Q('PUNTAJE', 'SCORE'),
   cardTop: Q('SEMINARIO · JEREMÍAS 31', 'SEMINARY · JEREMIAH 31'),
-  saveMemory: Q('Guardar recuerdo ✨', 'Keep this memory ✨')
+  saveMemory: Q('Guardar recuerdo ✨', 'Keep this memory ✨'),
+  rankTitle: Q('Ranking de la clase', 'Class ranking'),
+  rankDone: Q('✔ Terminó', '✔ Finished'),
+  rankLevel: Q('Nivel', 'Level'),
+  rankReflect: Q('Reflexión', 'Reflection'),
+  rankUpd: Q('Se actualiza cada 5 segundos', 'Updates every 5 seconds'),
+  rankOff: Q('Sin conexión, reintentando…', 'Offline, retrying…'),
+  rankEmpty: Q('Todavía no hay resultados…', 'No results yet…'),
+  you: Q('(vos)', '(you)')
 };
 function applyLang() {
   document.documentElement.lang = S.lang;
@@ -832,8 +851,49 @@ function makeCard() {
   g.fillText(new Date().toLocaleDateString(S.lang === 'es' ? 'es-AR' : 'en-US') + ' · ' + T(Q('Jeremías 31 · Seminario 2026', 'Jeremiah 31 · Seminary 2026')), W / 2, H - 60);
   return cv;
 }
+// ---------------- Ranking en el celular (al final) ----------------
+let rankTimer = null;
+function todayStr() { const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+function renderRank(lista) {
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // asegurar que el propio jugador aparezca aunque la planilla todavía no lo devuelva
+  if (!lista.some(r => r.estado === 'terminado' && r.nombre === S.name && Number(r.puntaje) === S.score)) lista = lista.concat([{ nombre: S.name, estado: 'terminado', puntaje: S.score, nivel: 5 }]);
+  const done = lista.filter(r => r.estado === 'terminado').sort((a, b) => b.puntaje - a.puntaje);
+  const play = lista.filter(r => r.estado !== 'terminado').sort((a, b) => b.nivel - a.nivel);
+  const medal = ['🥇', '🥈', '🥉'];
+  let html = '', meMarked = false;
+  done.forEach((r, i) => {
+    const me = !meMarked && r.nombre === S.name && Number(r.puntaje) === S.score; if (me) meMarked = true;
+    html += '<div class="rk' + (me ? ' me' : '') + '"><div class="p">' + (medal[i] || (i + 1)) + '</div><div class="n">' + esc(r.nombre) + (me ? ' ' + T(UI.you) : '') + '</div><div class="v">' + Number(r.puntaje).toLocaleString('es-AR') + '</div></div>';
+  });
+  play.forEach(r => {
+    const n = Number(r.nivel) || 1;
+    html += '<div class="rk"><div class="p">⏳</div><div class="n">' + esc(r.nombre) + '</div><div class="s">' + (n > 4 ? T(UI.rankReflect) : T(UI.rankLevel) + ' ' + n + '/4') + '</div></div>';
+  });
+  $('#rank-list').innerHTML = html || '<p class="hint">' + T(UI.rankEmpty) + '</p>';
+}
+async function refreshRank() {
+  try {
+    if (TEST) throw new Error('test');
+    const r = await fetch(RANKING_URL + '?juego=' + JUEGO_ID + '&fecha=' + todayStr() + '&t=' + Date.now());
+    const d = await r.json(); if (!d.ok) throw new Error('bad');
+    renderRank(d.lista || []);
+    $('#rank-upd').textContent = T(UI.rankUpd);
+  } catch (e) {
+    renderRank(window.__mockRank || []);
+    $('#rank-upd').textContent = TEST ? '' : T(UI.rankOff);
+  }
+}
+function showRanking() {
+  if (!RANKING_URL) return;
+  $('#end-rank').style.display = '';
+  refreshRank();
+  if (!rankTimer) rankTimer = setInterval(refreshRank, 5000);
+}
+
 async function shareCard() {
   sfx.click();
+  showRanking();
   const cv = makeCard(); const url = cv.toDataURL('image/png');
   const img = $('#end-img'); img.src = url; img.style.display = 'block';
   const fname = 'tablas-de-carne-' + (S.name.replace(/\s+/g, '-').toLowerCase() || 'alumno') + '.png';
