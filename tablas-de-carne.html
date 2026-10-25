@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Tablas de Carne · Jeremías 31</title>
+<title>Tablas en el Corazón · Jeremías 31</title>
 <style>
 :root{--bg:#0A0E1A;--card:#141B2E;--gold:#E8B24D;--cyan:#2DD4E8;--flesh:#e11d48;--text:#ffffff;--muted:#B8C2D9;--ok:#34d399;--bad:#f87171;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -170,7 +170,7 @@ function cleanText(s) {
 
 // ---------------- Textos de interfaz ----------------
 const UI = {
-  appTitle: Q('Tablas de Carne', 'Tables of Flesh'),
+  appTitle: Q('Tablas en el Corazón', 'Tables of the Heart'),
   appSub: Q('Jeremías 31 · “Escribiré Mi ley en su corazón”. Tu corazón empieza de piedra… ¿podés transformarlo en 4 niveles?', 'Jeremiah 31 · “I will write My law in their hearts.” Your heart starts as stone… can you transform it in 4 levels?'),
   askName: Q('¿Cómo te llamás?', "What's your name?"),
   start: Q('Comenzar', 'Start'),
@@ -896,7 +896,7 @@ async function shareCard() {
   showRanking();
   const cv = makeCard(); const url = cv.toDataURL('image/png');
   const img = $('#end-img'); img.src = url; img.style.display = 'block';
-  const fname = 'tablas-de-carne-' + (S.name.replace(/\s+/g, '-').toLowerCase() || 'alumno') + '.png';
+  const fname = 'tablas-en-el-corazon-' + (S.name.replace(/\s+/g, '-').toLowerCase() || 'alumno') + '.png';
   try {
     const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
     const file = new File([blob], fname, { type: 'image/png' });
