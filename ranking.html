@@ -31,6 +31,15 @@ h1{margin:0;font-size:clamp(26px,5vw,44px);background:linear-gradient(90deg,var(
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold))}
 .empty{text-align:center;color:var(--muted);padding:40px 10px;font-size:20px}
 footer{color:var(--muted);font-size:13px;text-align:center;margin-top:24px}
+@media (max-width:600px){
+  .row{gap:10px;padding:12px 14px}
+  .pos{width:34px}
+  .name{white-space:normal;word-break:break-word}
+  .state.done{display:none}
+  .state{font-size:.72em}
+  .pts{min-width:auto}
+  .bar{width:70px}
+}
 </style>
 </head>
 <body>
